@@ -6,3 +6,9 @@ dist
 build
 uploads/
 mysql_err.txt
+
+# Agent workspace metadata
+.agent/
+.agents/
+.augment/
+skills-lock.json
