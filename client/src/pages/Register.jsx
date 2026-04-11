@@ -8,6 +8,7 @@ const Register = () => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     phone: '',
     address: '',
   });
@@ -25,16 +26,22 @@ const Register = () => {
     setError('');
 
     if (form.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp');
       return;
     }
 
     setLoading(true);
     try {
-      await register(form);
+      const { confirmPassword, ...registerData } = form;
+      await register(registerData);
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Đăng ký thất bại');
     } finally {
       setLoading(false);
     }
@@ -70,7 +77,7 @@ const Register = () => {
               className="form-input"
               type="text"
               name="email"
-              placeholder="Ví dụ: lehoang.21it"
+              placeholder="Ví dụ: 25IT.100"
               value={form.email}
               onChange={handleChange}
               required
@@ -87,6 +94,21 @@ const Register = () => {
               name="password"
               placeholder="Ít nhất 6 ký tự"
               value={form.password}
+              onChange={handleChange}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="reg-confirm-password">Nhập lại mật khẩu</label>
+            <input
+              id="reg-confirm-password"
+              className="form-input"
+              type="password"
+              name="confirmPassword"
+              placeholder="Xác nhận lại mật khẩu"
+              value={form.confirmPassword}
               onChange={handleChange}
               required
               autoComplete="new-password"
