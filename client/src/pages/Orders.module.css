@@ -1,0 +1,142 @@
+.ordersPage {
+  padding: 40px 0 80px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.orderCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast);
+}
+
+.orderCard:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  cursor: pointer;
+  gap: 16px;
+}
+
+.orderMeta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.orderId {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.orderDate {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.orderRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.orderTotal {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.expandIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.expandIcon.expanded {
+  transform: rotate(180deg);
+}
+
+.orderItems {
+  padding: 0 24px 20px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.itemRow + .itemRow {
+  border-top: 1px solid var(--color-border-light);
+}
+
+.itemImage {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-bg-alt);
+  flex-shrink: 0;
+}
+
+.itemName {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.itemQty {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.itemPrice {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 80px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .orderHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .orderRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .orderItems {
+    padding: 0 16px 16px;
+  }
+}

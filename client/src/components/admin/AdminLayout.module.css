@@ -1,0 +1,30 @@
+.adminLayout {
+  display: flex;
+  min-height: calc(100dvh - var(--nav-height));
+}
+
+.sidebarWrap {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 36px;
+  background: var(--color-bg);
+}
+
+@media (max-width: 768px) {
+  .adminLayout {
+    flex-direction: column;
+  }
+
+  .sidebarWrap {
+    width: 100%;
+  }
+
+  .mainContent {
+    padding: 20px 16px;
+  }
+}
