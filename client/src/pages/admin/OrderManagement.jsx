@@ -6,11 +6,13 @@ import styles from './OrderManagement.module.css';
 import { useRealtime } from '../../context/useRealtime';
 import { getAssetUrl } from '../../utils/assets';
 
-const nextStatus = {
-  pending: 'cooking',
-  cooking: 'delivering',
-  delivering: 'done',
-};
+const operationalStatuses = ['cooking', 'delivering', 'done'];
+
+const getStatusOptions = (currentStatus) => (
+  currentStatus === 'pending'
+    ? ['pending', ...operationalStatuses]
+    : operationalStatuses
+);
 
 const statusLabels = {
   pending: 'Đang chờ',
@@ -131,10 +133,9 @@ const OrderManagement = () => {
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                       >
-                        <option value={order.status}>{statusLabels[order.status]}</option>
-                        {nextStatus[order.status] && (
-                          <option value={nextStatus[order.status]}>{statusLabels[nextStatus[order.status]]}</option>
-                        )}
+                        {getStatusOptions(order.status).map((status) => (
+                          <option key={status} value={status}>{statusLabels[status]}</option>
+                        ))}
                       </select>
                     </td>
                     <td style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{formatDate(order.createdAt || order.created_at)}</td>

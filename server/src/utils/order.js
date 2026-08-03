@@ -4,10 +4,10 @@ export const MAX_ORDER_ITEMS = 50;
 export const MAX_ITEM_QUANTITY = 20;
 
 export const ORDER_STATUS_TRANSITIONS = Object.freeze({
-  pending: ['cooking'],
-  cooking: ['delivering'],
-  delivering: ['done'],
-  done: [],
+  pending: ['cooking', 'delivering', 'done'],
+  cooking: ['delivering', 'done'],
+  delivering: ['cooking', 'done'],
+  done: ['cooking', 'delivering'],
 });
 
 export const normalizeOrderItems = (items) => {

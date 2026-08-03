@@ -55,10 +55,13 @@ test('normalizeDeliveryDetails trims values and validates phone numbers', () => 
   }));
 });
 
-test('order status only moves forward one step', () => {
+test('admins can move orders between operational statuses', () => {
   assert.doesNotThrow(() => assertValidStatusTransition('pending', 'cooking'));
+  assert.doesNotThrow(() => assertValidStatusTransition('pending', 'done'));
+  assert.doesNotThrow(() => assertValidStatusTransition('cooking', 'done'));
+  assert.doesNotThrow(() => assertValidStatusTransition('done', 'cooking'));
+  assert.doesNotThrow(() => assertValidStatusTransition('delivering', 'cooking'));
   assert.doesNotThrow(() => assertValidStatusTransition('done', 'done'));
-  assert.throws(() => assertValidStatusTransition('pending', 'done'));
   assert.throws(() => assertValidStatusTransition('done', 'pending'));
   assert.throws(() => assertValidStatusTransition('pending', 'unknown'));
 });
