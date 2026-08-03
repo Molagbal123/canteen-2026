@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { orderAPI } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import styles from './Orders.module.css';
+import { useRealtime } from '../context/useRealtime';
+import { useToast } from '../components/common/useToast';
+import { getAssetUrl } from '../utils/assets';
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 
@@ -22,26 +25,44 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const { socket } = useRealtime();
+  const { showToast } = useToast();
 
-  useEffect(() => {
-    const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
       try {
         setLoading(true);
         const res = await orderAPI.getUserOrders();
         setOrders(res.data);
+        setError(null);
       } catch (err) {
         setError(err.message || 'Lấy danh sách đơn hàng thất bại');
       } finally {
         setLoading(false);
       }
-    };
-    fetchOrders();
   }, []);
 
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    return image.startsWith('http') ? image : `http://localhost:5000${image}`;
-  };
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleStatusUpdated = (updatedOrder) => {
+      setOrders((current) => current.map((order) =>
+        order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
+      ));
+      const label = statusMap[updatedOrder.status]?.label || updatedOrder.status;
+      showToast(`Đơn hàng #${updatedOrder.id} đã chuyển sang: ${label}`, 'success');
+    };
+
+    socket.on('order:status-updated', handleStatusUpdated);
+    socket.on('connect', fetchOrders);
+    return () => {
+      socket.off('order:status-updated', handleStatusUpdated);
+      socket.off('connect', fetchOrders);
+    };
+  }, [fetchOrders, showToast, socket]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -103,13 +124,13 @@ const Orders = () => {
                         <div key={item.id} className={styles.itemRow}>
                           <img
                             className={styles.itemImage}
-                            src={getImageUrl(item.food?.image)}
-                            alt={item.food?.name || 'Món'}
+                            src={getAssetUrl(item.food_image || item.food?.image)}
+                            alt={item.food_name || item.food?.name || 'Món'}
                             onError={(e) => {
                               e.target.src = 'https://placehold.co/88x88/f1f3f6/9ca3af?text=Món';
                             }}
                           />
-                          <span className={styles.itemName}>{item.food?.name || 'Món không xác định'}</span>
+                          <span className={styles.itemName}>{item.food_name || item.food?.name || 'Món không xác định'}</span>
                           <span className={styles.itemQty}>x{item.quantity}</span>
                           <span className={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</span>
                         </div>

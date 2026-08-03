@@ -3,6 +3,7 @@ import { foodAPI } from '../services/api';
 import FoodCard from '../components/food/FoodCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import styles from './Home.module.css';
+import { useRealtime } from '../context/useRealtime';
 
 const Home = () => {
   const [foods, setFoods] = useState([]);
@@ -12,6 +13,7 @@ const Home = () => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const { socket } = useRealtime();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 350);
@@ -50,6 +52,20 @@ const Home = () => {
   useEffect(() => {
     fetchFoods();
   }, [fetchFoods]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    const handleFoodChanged = () => {
+      fetchCategories();
+      fetchFoods();
+    };
+    socket.on('food:changed', handleFoodChanged);
+    socket.on('connect', handleFoodChanged);
+    return () => {
+      socket.off('food:changed', handleFoodChanged);
+      socket.off('connect', handleFoodChanged);
+    };
+  }, [fetchCategories, fetchFoods, socket]);
 
   return (
     <div className="page">

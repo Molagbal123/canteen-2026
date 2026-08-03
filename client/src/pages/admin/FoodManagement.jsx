@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { foodAPI } from '../../services/api';
-import { useToast } from '../../components/common/Toast';
+import { useToast } from '../../components/common/useToast';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import styles from './FoodManagement.module.css';
+import { useRealtime } from '../../context/useRealtime';
+import { getAssetUrl } from '../../utils/assets';
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 
@@ -18,13 +20,14 @@ const FoodManagement = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
+  const { socket } = useRealtime();
 
   const fetchFoods = useCallback(async () => {
     try {
       setLoading(true);
       const res = await foodAPI.getAll({ limit: 100 });
       setFoods(res.data);
-    } catch (err) {
+    } catch {
       showToast('Tải danh sách món ăn thất bại', 'error');
     } finally {
       setLoading(false);
@@ -32,6 +35,16 @@ const FoodManagement = () => {
   }, [showToast]);
 
   useEffect(() => { fetchFoods(); }, [fetchFoods]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    socket.on('food:changed', fetchFoods);
+    socket.on('connect', fetchFoods);
+    return () => {
+      socket.off('food:changed', fetchFoods);
+      socket.off('connect', fetchFoods);
+    };
+  }, [fetchFoods, socket]);
 
   const openCreate = () => {
     setEditing(null);
@@ -49,8 +62,7 @@ const FoodManagement = () => {
       category: food.category,
       image: null,
     });
-    const imgUrl = food.image?.startsWith('http') ? food.image : `http://localhost:5000${food.image}`;
-    setImagePreview(imgUrl);
+    setImagePreview(getAssetUrl(food.image));
     setShowModal(true);
   };
 
@@ -103,11 +115,6 @@ const FoodManagement = () => {
     }
   };
 
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    return image.startsWith('http') ? image : `http://localhost:5000${image}`;
-  };
-
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -139,7 +146,7 @@ const FoodManagement = () => {
                   <div className={styles.foodRow}>
                     <img
                       className={styles.foodThumb}
-                      src={getImageUrl(food.image)}
+                      src={getAssetUrl(food.image)}
                       alt={food.name}
                       onError={(e) => { e.target.src = 'https://placehold.co/88x88/f1f3f6/9ca3af?text=Food'; }}
                     />

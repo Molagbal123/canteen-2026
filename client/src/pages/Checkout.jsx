@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../components/common/Toast';
+import { useCart } from '../context/useCart';
+import { useAuth } from '../context/useAuth';
+import { useToast } from '../components/common/useToast';
 import { orderAPI } from '../services/api';
 import styles from './Checkout.module.css';
+import { getAssetUrl } from '../utils/assets';
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 
@@ -13,6 +14,9 @@ const Checkout = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const requestId = useRef(
+    globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   const [form, setForm] = useState({
     customerName: user?.name || '',
@@ -43,6 +47,7 @@ const Checkout = () => {
         customerName: form.customerName,
         customerPhone: form.customerPhone,
         customerAddress: form.customerAddress,
+        requestId: requestId.current,
       });
       clearCart();
       setShowSuccess(true);
@@ -51,11 +56,6 @@ const Checkout = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    return image.startsWith('http') ? image : `http://localhost:5000${image}`;
   };
 
   if (items.length === 0 && !showSuccess) {
@@ -134,7 +134,7 @@ const Checkout = () => {
                 <div key={item.id} className={styles.summaryItem}>
                   <img
                     className={styles.summaryItemImage}
-                    src={getImageUrl(item.image)}
+                    src={getAssetUrl(item.image)}
                     alt={item.name}
                     onError={(e) => {
                       e.target.src = `https://placehold.co/96x96/f1f3f6/9ca3af?text=${encodeURIComponent(item.name)}`;

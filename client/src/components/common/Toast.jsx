@@ -1,13 +1,6 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import styles from './Toast.module.css';
-
-const ToastContext = createContext(null);
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) throw new Error('useToast must be used within ToastProvider');
-  return context;
-};
+import ToastStateContext from './ToastStateContext';
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
@@ -25,7 +18,7 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastStateContext.Provider value={{ showToast }}>
       {children}
       <div className={styles.toastContainer}>
         {toasts.map((toast) => (
@@ -42,6 +35,6 @@ export const ToastProvider = ({ children }) => {
           </div>
         ))}
       </div>
-    </ToastContext.Provider>
+    </ToastStateContext.Provider>
   );
 };

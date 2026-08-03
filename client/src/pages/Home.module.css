@@ -133,6 +133,9 @@
   }
 
   .categories {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 4px;

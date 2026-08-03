@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './components/common/Toast';
+import RealtimeProvider from './context/RealtimeProvider';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import CartSidebar from './components/cart/CartSidebar';
@@ -24,8 +25,9 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <CartProvider>
-          <ToastProvider>
+        <RealtimeProvider>
+          <CartProvider>
+            <ToastProvider>
             <div className="app-layout">
               <Navbar />
               <main className="main-content">
@@ -67,8 +69,9 @@ function App() {
               <Footer />
               <CartSidebar />
             </div>
-          </ToastProvider>
-        </CartProvider>
+            </ToastProvider>
+          </CartProvider>
+        </RealtimeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

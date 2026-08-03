@@ -2,7 +2,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import sequelize from '../config/database.js';
-import { User, Food } from '../models/index.js';
+import { User, Food, Order, OrderItem } from '../models/index.js';
+import { runMigrations } from '../migrations/index.js';
 
 const foodItems = [
   {
@@ -96,31 +97,46 @@ const seed = async () => {
     await sequelize.authenticate();
     console.log('Connected to MySQL');
 
-    await sequelize.sync({ force: true });
-    console.log('Tables created');
+    await runMigrations();
 
-    const admin = await User.create({
-      name: 'Admin',
-      email: 'admin@cafeteria.com',
-      password: 'admin123',
-      role: 'admin',
-      phone: '0901234567',
-      address: 'Room A1-101, Building A',
+    if (process.env.SEED_RESET === 'true') {
+      await sequelize.transaction(async (transaction) => {
+        await OrderItem.destroy({ where: {}, transaction });
+        await Order.destroy({ where: {}, transaction });
+        await Food.destroy({ where: {}, force: true, transaction });
+        await User.destroy({ where: {}, transaction });
+      });
+      console.log('Existing application data cleared');
+    }
+
+    const [admin] = await User.findOrCreate({
+      where: { email: 'admin@cafeteria.com' },
+      defaults: {
+        name: 'Admin',
+        password: 'admin123',
+        role: 'admin',
+        phone: '0901234567',
+        address: 'Room A1-101, Building A',
+      },
     });
     console.log('Admin user created:', admin.email);
 
-    const user = await User.create({
-      name: 'Nguyen Van Minh',
-      email: 'minh@student.edu.vn',
-      password: 'user123',
-      role: 'user',
-      phone: '0912345678',
-      address: 'Room B2-305, Building B',
+    const [user] = await User.findOrCreate({
+      where: { email: 'minh@student.edu.vn' },
+      defaults: {
+        name: 'Nguyen Van Minh',
+        password: 'user123',
+        role: 'user',
+        phone: '0912345678',
+        address: 'Room B2-305, Building B',
+      },
     });
     console.log('Test user created:', user.email);
 
-    await Food.bulkCreate(foodItems);
-    console.log(`${foodItems.length} food items seeded`);
+    for (const food of foodItems) {
+      await Food.findOrCreate({ where: { name: food.name }, defaults: food });
+    }
+    console.log(`${foodItems.length} food items ensured`);
 
     console.log('\nSeed completed successfully!');
     console.log('Admin login: admin@cafeteria.com / admin123');

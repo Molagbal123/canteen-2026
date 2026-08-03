@@ -28,6 +28,10 @@ const Food = sequelize.define('Food', {
     allowNull: true,
     defaultValue: '',
   },
+  image_public_id: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
   description: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -42,6 +46,8 @@ const Food = sequelize.define('Food', {
   },
 }, {
   tableName: 'foods',
+  paranoid: true,
+  deletedAt: 'deleted_at',
 });
 
 export default Food;

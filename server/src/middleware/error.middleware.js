@@ -21,6 +21,11 @@ const errorMiddleware = (err, req, res, next) => {
     message = 'Referenced resource does not exist';
   }
 
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : err.message;
+  }
+
   if (process.env.NODE_ENV === 'development') {
     console.error('Error:', err);
   }

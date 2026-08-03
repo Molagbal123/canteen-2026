@@ -1,14 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-
-const CartContext = createContext(null);
-
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
-};
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import CartStateContext from './CartStateContext';
 
 const CART_KEY = 'cafeteria_cart';
 
@@ -92,8 +83,8 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={value}>
+    <CartStateContext.Provider value={value}>
       {children}
-    </CartContext.Provider>
+    </CartStateContext.Provider>
   );
 };

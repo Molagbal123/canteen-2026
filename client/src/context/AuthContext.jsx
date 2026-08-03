@@ -1,69 +1,72 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI } from '../services/api';
-
-const AuthContext = createContext(null);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+import { useState, useEffect, useCallback } from 'react';
+import { authAPI, setApiAccessToken } from '../services/api';
+import AuthStateContext from './AuthStateContext';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('accessToken'));
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = useCallback(async () => {
+  const clearSession = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    setApiAccessToken(null);
+  }, []);
+
+  const bootstrapSession = useCallback(async () => {
     try {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+      localStorage.removeItem('accessToken');
+      const refreshResponse = await authAPI.refreshToken();
+      const { accessToken } = refreshResponse.data;
+      setApiAccessToken(accessToken);
+      setToken(accessToken);
       const res = await authAPI.getMe();
       setUser(res.data);
-    } catch (error) {
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('accessToken');
+    } catch {
+      clearSession();
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [clearSession]);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    bootstrapSession();
+  }, [bootstrapSession]);
+
+  useEffect(() => {
+    const handleTokenRefresh = (event) => {
+      setApiAccessToken(event.detail);
+      setToken(event.detail);
+    };
+    window.addEventListener('auth:token-refreshed', handleTokenRefresh);
+    return () => window.removeEventListener('auth:token-refreshed', handleTokenRefresh);
+  }, []);
 
   const login = async (credentials) => {
     const res = await authAPI.login(credentials);
     const { user: userData, accessToken } = res.data;
+    setApiAccessToken(accessToken);
     setUser(userData);
     setToken(accessToken);
-    localStorage.setItem('accessToken', accessToken);
     return userData;
   };
 
   const register = async (data) => {
     const res = await authAPI.register(data);
     const { user: userData, accessToken } = res.data;
+    setApiAccessToken(accessToken);
     setUser(userData);
     setToken(accessToken);
-    localStorage.setItem('accessToken', accessToken);
     return userData;
   };
 
   const logout = async () => {
     try {
       await authAPI.logout();
-    } catch (error) {
+    } catch {
       // ignore
     }
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('accessToken');
+    clearSession();
   };
 
   const updateUser = (newData) => {
@@ -83,8 +86,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthStateContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </AuthStateContext.Provider>
   );
 };

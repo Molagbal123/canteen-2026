@@ -1,8 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { orderAPI } from '../../services/api';
-import { useToast } from '../../components/common/Toast';
+import { useToast } from '../../components/common/useToast';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import styles from './OrderManagement.module.css';
+import { useRealtime } from '../../context/useRealtime';
+import { getAssetUrl } from '../../utils/assets';
+
+const nextStatus = {
+  pending: 'cooking',
+  cooking: 'delivering',
+  delivering: 'done',
+};
+
+const statusLabels = {
+  pending: 'Đang chờ',
+  cooking: 'Đang chuẩn bị',
+  delivering: 'Đang giao',
+  done: 'Hoàn thành',
+};
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 const formatDate = (dateStr) => {
@@ -17,6 +32,7 @@ const OrderManagement = () => {
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
   const { showToast } = useToast();
+  const { socket } = useRealtime();
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -24,7 +40,7 @@ const OrderManagement = () => {
       const res = await orderAPI.getAllOrders({ page, limit: 15 });
       setOrders(res.data);
       setPagination(res.pagination);
-    } catch (err) {
+    } catch {
       showToast('Lấy danh sách đơn hàng thất bại', 'error');
     } finally {
       setLoading(false);
@@ -32,6 +48,26 @@ const OrderManagement = () => {
   }, [page, showToast]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleCreated = () => fetchOrders();
+    const handleUpdated = (updatedOrder) => {
+      setOrders((current) => current.map((order) =>
+        order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
+      ));
+    };
+
+    socket.on('order:created', handleCreated);
+    socket.on('order:status-updated', handleUpdated);
+    socket.on('connect', fetchOrders);
+    return () => {
+      socket.off('order:created', handleCreated);
+      socket.off('order:status-updated', handleUpdated);
+      socket.off('connect', fetchOrders);
+    };
+  }, [fetchOrders, socket]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -43,11 +79,6 @@ const OrderManagement = () => {
     } catch (err) {
       showToast(err.message || 'Cập nhật trạng thái thất bại', 'error');
     }
-  };
-
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    return image.startsWith('http') ? image : `http://localhost:5000${image}`;
   };
 
   if (loading) return <LoadingSpinner />;
@@ -72,8 +103,8 @@ const OrderManagement = () => {
             {orders.map((order) => {
               const isExpanded = expandedId === order.id;
               return (
-                <>
-                  <tr key={order.id}>
+                <Fragment key={order.id}>
+                  <tr>
                     <td>
                       <button
                         className={styles.expandBtn}
@@ -100,10 +131,10 @@ const OrderManagement = () => {
                         value={order.status}
                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
                       >
-                        <option value="pending">Đang chờ</option>
-                        <option value="cooking">Đang chuẩn bị</option>
-                        <option value="delivering">Đang giao</option>
-                        <option value="done">Hoàn thành</option>
+                        <option value={order.status}>{statusLabels[order.status]}</option>
+                        {nextStatus[order.status] && (
+                          <option value={nextStatus[order.status]}>{statusLabels[nextStatus[order.status]]}</option>
+                        )}
                       </select>
                     </td>
                     <td style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{formatDate(order.createdAt || order.created_at)}</td>
@@ -116,11 +147,11 @@ const OrderManagement = () => {
                             <div key={item.id} className={styles.orderItem}>
                               <img
                                 className={styles.itemThumb}
-                                src={getImageUrl(item.food?.image)}
-                                alt={item.food?.name || 'Item'}
+                                src={getAssetUrl(item.food_image || item.food?.image)}
+                                alt={item.food_name || item.food?.name || 'Item'}
                                 onError={(e) => { e.target.src = 'https://placehold.co/72x72/f1f3f6/9ca3af?text=Food'; }}
                               />
-                              <span className={styles.itemName}>{item.food?.name || 'Món không xác định'}</span>
+                              <span className={styles.itemName}>{item.food_name || item.food?.name || 'Món không xác định'}</span>
                               <span className={styles.itemDetail}>x{item.quantity}</span>
                               <span className={styles.itemDetail}>{formatPrice(item.price * item.quantity)}</span>
                             </div>
@@ -129,7 +160,7 @@ const OrderManagement = () => {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>

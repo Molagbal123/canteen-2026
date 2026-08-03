@@ -1,13 +1,9 @@
 import { catchAsync } from '../utils/catch-async.js';
 import * as authService from '../services/auth.service.js';
+import { getRefreshCookieOptions } from '../config/runtime.js';
 
 const setTokenCookie = (res, token) => {
-  res.cookie('refreshToken', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie('refreshToken', token, getRefreshCookieOptions());
 };
 
 export const register = catchAsync(async (req, res) => {
@@ -23,7 +19,8 @@ export const login = catchAsync(async (req, res) => {
 });
 
 export const logout = catchAsync(async (req, res) => {
-  res.clearCookie('refreshToken');
+  const { maxAge, ...cookieOptions } = getRefreshCookieOptions();
+  res.clearCookie('refreshToken', cookieOptions);
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 

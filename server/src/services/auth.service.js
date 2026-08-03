@@ -7,12 +7,19 @@ export const register = async ({ name, email, password, phone, address }) => {
     throw new ValidationError('Name, email, and password are required');
   }
 
-  const existingUser = await User.findOne({ where: { email } });
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const existingUser = await User.findOne({ where: { email: normalizedEmail } });
   if (existingUser) {
     throw new ConflictError('Tài khoản này đã tồn tại');
   }
 
-  const user = await User.create({ name, email, password, phone: phone || '', address: address || '' });
+  const user = await User.create({
+    name: String(name).trim(),
+    email: normalizedEmail,
+    password,
+    phone: String(phone || '').trim(),
+    address: String(address || '').trim(),
+  });
 
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
@@ -29,7 +36,7 @@ export const login = async ({ email, password }) => {
     throw new ValidationError('Tài khoản và mật khẩu là bắt buộc');
   }
 
-  const user = await User.findOne({ where: { email } });
+  const user = await User.findOne({ where: { email: String(email).trim().toLowerCase() } });
   if (!user) {
     throw new AuthenticationError('Tài khoản hoặc mật khẩu không hợp lệ');
   }

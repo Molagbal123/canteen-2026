@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { orderAPI } from '../../services/api';
 import StatsCard from '../../components/admin/StatsCard';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import styles from './Dashboard.module.css';
+import { useRealtime } from '../../context/useRealtime';
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 const formatDate = (dateStr) => {
@@ -20,9 +21,9 @@ const statusMap = {
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { socket } = useRealtime();
 
-  useEffect(() => {
-    const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
       try {
         const res = await orderAPI.getStats();
         setStats(res.data);
@@ -31,9 +32,21 @@ const Dashboard = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchStats();
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    socket.on('dashboard:changed', fetchStats);
+    socket.on('connect', fetchStats);
+    return () => {
+      socket.off('dashboard:changed', fetchStats);
+      socket.off('connect', fetchStats);
+    };
+  }, [fetchStats, socket]);
 
   if (loading) return <LoadingSpinner />;
 

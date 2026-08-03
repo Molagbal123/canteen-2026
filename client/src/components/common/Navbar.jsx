@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/useAuth';
+import { useCart } from '../../context/useCart';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showMobile, setShowMobile] = useState(false);
+  const [mobileMenuPath, setMobileMenuPath] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -23,10 +23,6 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setShowMobile(false);
-  }, [location]);
-
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
@@ -34,6 +30,7 @@ const Navbar = () => {
   };
 
   const isActive = (path) => location.pathname === path;
+  const showMobile = mobileMenuPath === location.pathname;
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
@@ -132,7 +129,14 @@ const Navbar = () => {
               </div>
             )}
 
-            <button className={styles.mobileToggle} onClick={() => setShowMobile(!showMobile)}>
+            <button
+              type="button"
+              className={styles.mobileToggle}
+              onClick={() => setMobileMenuPath(showMobile ? null : location.pathname)}
+              aria-label={showMobile ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
+              aria-expanded={showMobile}
+              aria-controls="mobile-navigation"
+            >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {showMobile ? (
                   <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
@@ -146,7 +150,7 @@ const Navbar = () => {
       </nav>
 
       {showMobile && (
-        <div className={styles.mobileMenu}>
+        <div id="mobile-navigation" className={styles.mobileMenu}>
           {!isAdminRoute && !isAuthPage && (
             <>
               <Link to="/" className={`${styles.navLink} ${isActive('/') ? styles.active : ''}`}>Thực Đơn</Link>

@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/useCart';
+import { useAuth } from '../../context/useAuth';
 import styles from './CartSidebar.module.css';
+import { getAssetUrl } from '../../utils/assets';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
@@ -21,11 +22,6 @@ const CartSidebar = () => {
       return;
     }
     navigate('/checkout');
-  };
-
-  const getImageUrl = (image) => {
-    if (!image) return '';
-    return image.startsWith('http') ? image : `http://localhost:5000${image}`;
   };
 
   return (
@@ -58,7 +54,7 @@ const CartSidebar = () => {
                 <div key={item.id} className={styles.cartItem}>
                   <img
                     className={styles.cartItemImage}
-                    src={getImageUrl(item.image)}
+                    src={getAssetUrl(item.image)}
                     alt={item.name}
                     onError={(e) => {
                       e.target.src = `https://placehold.co/128x128/f1f3f6/9ca3af?text=${encodeURIComponent(item.name)}`;

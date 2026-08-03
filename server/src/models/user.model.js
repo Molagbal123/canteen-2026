@@ -19,6 +19,9 @@ const User = sequelize.define('User', {
   email: {
     type: DataTypes.STRING(255),
     allowNull: false,
+    set(value) {
+      this.setDataValue('email', String(value || '').trim().toLowerCase());
+    },
     unique: { msg: 'Tài khoản đã được đăng ký' },
     validate: {
       notEmpty: { msg: 'Vui lòng nhập tài khoản' },

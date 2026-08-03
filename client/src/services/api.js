@@ -1,6 +1,11 @@
 import axios from 'axios';
+import { API_BASE_URL } from '../config/runtime';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+let accessToken = null;
+
+export const setApiAccessToken = (token) => {
+  accessToken = token || null;
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,9 +16,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
@@ -23,16 +27,20 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isPublicAuthRequest = ['/auth/login', '/auth/register', '/auth/refresh-token']
+      .some((path) => originalRequest?.url?.includes(path));
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicAuthRequest) {
       originalRequest._retry = true;
       try {
         const res = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
         const { accessToken } = res.data.data;
-        localStorage.setItem('accessToken', accessToken);
+        setApiAccessToken(accessToken);
+        window.dispatchEvent(new CustomEvent('auth:token-refreshed', { detail: accessToken }));
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
+        setApiAccessToken(null);
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

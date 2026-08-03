@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { foodAPI } from '../services/api';
-import { useCart } from '../context/CartContext';
-import { useToast } from '../components/common/Toast';
+import { useCart } from '../context/useCart';
+import { useToast } from '../components/common/useToast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import styles from './FoodDetail.module.css';
+import { getAssetUrl } from '../utils/assets';
 
 const formatPrice = (price) => new Intl.NumberFormat('vi-VN').format(price) + 'đ';
 
@@ -55,9 +56,7 @@ const FoodDetail = () => {
     );
   }
 
-  const imageUrl = food.image?.startsWith('http')
-    ? food.image
-    : `http://localhost:5000${food.image}`;
+  const imageUrl = getAssetUrl(food.image);
 
   return (
     <div className={styles.detailPage}>

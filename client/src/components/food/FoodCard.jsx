@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '../../context/useCart';
 import styles from './FoodCard.module.css';
+import { getAssetUrl } from '../../utils/assets';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
@@ -15,9 +16,7 @@ const FoodCard = ({ food, index = 0 }) => {
     addToCart(food);
   };
 
-  const imageUrl = food.image?.startsWith('http')
-    ? food.image
-    : `http://localhost:5000${food.image}`;
+  const imageUrl = getAssetUrl(food.image);
 
   return (
     <div
